@@ -1,6 +1,11 @@
+'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartShopping, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faRegularHeart} from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image'
+import { store } from '@/lib/redux/store';
+import React, { useEffect, useState } from 'react';
+import { addToCart } from '@/lib/redux/slice/cart.slice';
 
 export interface Product {
   readonly code: string;
@@ -96,51 +101,69 @@ export interface ImageResolutionUrl {
   readonly url: string,
 }
 
-export interface Props {
+export interface ProductProps {
   readonly productData: Product;
 }
 
-function Product({productData}: Props) {
+function ProductTile({productData}: ProductProps) {
+
+  const [cartObject, setCartObject] = useState(() => {
+    
+    if(typeof window !== "undefined"){
+      const cartFromStorage = window.localStorage.getItem('cart')
+      return cartFromStorage ?? {};
+    }
+    return null;
+  })
+  
+  useEffect(() =>{
+    localStorage.setItem("cart", JSON.stringify(store.getState().cart));
+  }, [cartObject])
+
+  const handleAddToCart = ( productData: Product ) => {
+    store.dispatch(
+      addToCart(productData),
+    )
+    const newCartObject =cartObject===store.getState().cart.cart 
+    setCartObject(newCartObject);
+  }
 
   return (
-    <div className="flex">
+    <div className="flex lg:flex-col lg:relative lg:w-full" >
       <div className='w-2/5 justify-center'>
-        <Image src={productData.images[0].variants[100].formats.avif.resolutions['1x'].url}  width={100} height={100} alt=''></Image>
-
+        {/* <Image src={productData.images[0].variants[100].formats.avif.resolutions['1x'].url}  width={100} height={100} alt=''></Image> */}
+        <Image src={"https://s3-alpha-sig.figma.com/img/646f/08f5/333a22505486f4364a3616ec3b1b3591?Expires=1724025600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=NXt2BAM~HaaT2T3dVsoRPoAbSMso6gIy9XWAjqC2OFn9lVq1mE57dYhvIMqFtJ3YFosutL8Y~FV0IMcyPih8ZqIyQ54bjiSqvOGwd94b3xoNNtmbr0HKlOJRflNMpa-p6Kz7yUqgvIGoyW0Yae7igVjVbjqFopzvTVHKI3xAc6lyt9~RVu4TyrpL96MCHn29Yc80u64E5joAT0sluuXdFvyi9VRKONBlHQGCJxegJMOFHhd10Hsvykz9icGIQNfWrm6oTokxTai2EAB0V93xSftcw3Q~qGn~bYbcjJkMjSvu5e7JtkQXaRfOzizl8qez7N~LrcHMAe0SEk9Xdk8j-Q__"}  width={100} height={100} alt=''></Image>
         <p className='text-xs text-gray-500 my-2.5'>
           Pflitchtangaben
         </p>
-
-        <button className='bg-green-900 rounded p-3 text-white font-bold'>+ 
-          <FontAwesomeIcon icon={faCartShopping} />
+        <button className='bg-green-900 rounded-lg p-3 text-white font-bold hover:bg-green-700 lg:absolute lg:bottom-0 lg:right-10 lg:self-end'
+        onClick={(): void => {handleAddToCart(productData)}}>
+          +<FontAwesomeIcon icon={faCartShopping} />
           </button>
       </div>
       
       <div className='w-3/5 items-center'>
-        <h3 className='font-bold text-xl text-gray-800'>
-          {productData.name}
-        </h3>
+        <div className='flex'>
+          <h3 className='font-bold text-xl text-gray-700 h-14 overflow-hidden leading-normal break-normal'>
+            {productData.name}
+          </h3>
+          <div className='hover:text-red-700'>
+            <FontAwesomeIcon icon={faRegularHeart} />
+          </div>
+        </div>
         <p className='font-bold text-gray-500 text-sm'>
           {productData.packagingSize} · {productData.dosageForm}
         </p>
         <p className='font-bold text-gray-500 text-sm truncate'>
           {productData.supplier}
         </p>
-        {/* <span>
-          {productData.rating} · {productData.reviewCount}
-        </span> */}
-        <div>
-        <FontAwesomeIcon icon={faStar} />
-        <FontAwesomeIcon icon={faStar} />
-        <FontAwesomeIcon icon={faStar} />
-        <FontAwesomeIcon icon={faStar} />
-        <FontAwesomeIcon icon={faStar} />
-
+        <div className='text-yellow-400 lg:hidden'>
+          <FontAwesomeIcon icon={faStar} />
+          <FontAwesomeIcon icon={faStar} />
+          <FontAwesomeIcon icon={faStar} />
+          <FontAwesomeIcon icon={faStar} />
+          <FontAwesomeIcon icon={faStar} />
         </div>
-
-        {/* {productData.available}
-        {productData.stock} */}
-
         <div className='flex'>
             <span className='font-bold'>
               {productData.prices.salesPrice.formattedValue}
@@ -152,18 +175,12 @@ function Product({productData}: Props) {
         <p className='font-bold text-gray-500'>
           {productData.baseprice}
         </p>
-
-            
-        <p className='text-xs text-gray-500'>
+        <p className='text-xs text-gray-500 lg:hidden'>
           Gesponsert
         </p>
-
-        <br />
-        <br />
-        <br />
       </div>
     </div>
-);
+  );
 }
 
-export default Product;
+export default ProductTile;
