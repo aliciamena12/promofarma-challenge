@@ -5,7 +5,7 @@ import { faHeart as faRegularHeart} from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image'
 import { store } from '@/lib/redux/store';
 import React, { useEffect, useState } from 'react';
-import { addToCart } from '@/lib/redux/slice/cart.slice';
+import { addToCart } from '@/lib/redux/slice/cartSlice';
 
 export interface Product {
   readonly code: string;
@@ -26,12 +26,10 @@ export interface Product {
   readonly images: Array<ProductImages>;
 }
 
-
 export interface ProductCategories {
   readonly id: string;
   readonly name: string;
 }
-
 
 export interface ProductSaleCondition {
   readonly OR: Array<SaleConditionOR>;
@@ -108,7 +106,6 @@ export interface ProductProps {
 function ProductTile({productData}: ProductProps) {
 
   const [cartObject, setCartObject] = useState(() => {
-    
     if(typeof window !== "undefined"){
       const cartFromStorage = window.localStorage.getItem('cart')
       return cartFromStorage ?? {};
@@ -124,32 +121,32 @@ function ProductTile({productData}: ProductProps) {
     store.dispatch(
       addToCart(productData),
     )
-    const newCartObject =cartObject===store.getState().cart.cart 
+    const newCartObject = cartObject === store.getState().cart.cart 
     setCartObject(newCartObject);
   }
 
   return (
-    <div className="flex lg:flex-col lg:relative lg:w-full" >
-      <div className='w-2/5 justify-center'>
-        {/* <Image src={productData.images[0].variants[100].formats.avif.resolutions['1x'].url}  width={100} height={100} alt=''></Image> */}
-        <Image src={"https://s3-alpha-sig.figma.com/img/646f/08f5/333a22505486f4364a3616ec3b1b3591?Expires=1724025600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=NXt2BAM~HaaT2T3dVsoRPoAbSMso6gIy9XWAjqC2OFn9lVq1mE57dYhvIMqFtJ3YFosutL8Y~FV0IMcyPih8ZqIyQ54bjiSqvOGwd94b3xoNNtmbr0HKlOJRflNMpa-p6Kz7yUqgvIGoyW0Yae7igVjVbjqFopzvTVHKI3xAc6lyt9~RVu4TyrpL96MCHn29Yc80u64E5joAT0sluuXdFvyi9VRKONBlHQGCJxegJMOFHhd10Hsvykz9icGIQNfWrm6oTokxTai2EAB0V93xSftcw3Q~qGn~bYbcjJkMjSvu5e7JtkQXaRfOzizl8qez7N~LrcHMAe0SEk9Xdk8j-Q__"}  width={100} height={100} alt=''></Image>
-        <p className='text-xs text-gray-500 my-2.5'>
+    <div className="flex lg:flex-col lg:relative lg:w-full lg:p-6" >
+      <div className='flex flex-col w-2/5 justify-center lg:w-full'>
+        {/* <Image src={productData.images[0].variants[100].formats.avif.resolutions['1x'].url}  width={productData.images[0].variants[100].formats.avif.resolutions['1x'].width} height={productData.images[0].variants[100].formats.avif.resolutions['1x'].height} alt=''></Image> */}
+        <Image className="justify-self-center" src={"https://s3-alpha-sig.figma.com/img/646f/08f5/333a22505486f4364a3616ec3b1b3591?Expires=1724025600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=NXt2BAM~HaaT2T3dVsoRPoAbSMso6gIy9XWAjqC2OFn9lVq1mE57dYhvIMqFtJ3YFosutL8Y~FV0IMcyPih8ZqIyQ54bjiSqvOGwd94b3xoNNtmbr0HKlOJRflNMpa-p6Kz7yUqgvIGoyW0Yae7igVjVbjqFopzvTVHKI3xAc6lyt9~RVu4TyrpL96MCHn29Yc80u64E5joAT0sluuXdFvyi9VRKONBlHQGCJxegJMOFHhd10Hsvykz9icGIQNfWrm6oTokxTai2EAB0V93xSftcw3Q~qGn~bYbcjJkMjSvu5e7JtkQXaRfOzizl8qez7N~LrcHMAe0SEk9Xdk8j-Q__"}  width={140} height={140} alt={'Image of product: ' + productData.name}></Image>
+        <p className='text-xs text-gray-500 my-2.5 lg:order-first lg:text-right'>
           Pflitchtangaben
         </p>
-        <button className='bg-green-900 rounded-lg p-3 text-white font-bold hover:bg-green-700 lg:absolute lg:bottom-0 lg:right-10 lg:self-end'
-        onClick={(): void => {handleAddToCart(productData)}}>
+        <button className='bg-green-900 w-16 rounded-lg p-3 text-white font-bold hover:bg-green-700 lg:absolute lg:-bottom-5 lg:right-10 lg:self-end'
+        onClick={(): void => {handleAddToCart(productData)}} id="addToCartButton" title='addToCartButton'>
           +<FontAwesomeIcon icon={faCartShopping} />
           </button>
       </div>
       
-      <div className='w-3/5 items-center'>
+      <div className='w-3/5 items-center lg:w-full'>
         <div className='flex'>
           <h3 className='font-bold text-xl text-gray-700 h-14 overflow-hidden leading-normal break-normal'>
             {productData.name}
           </h3>
-          <div className='hover:text-red-700'>
+          <button className='block text-gray-400 text-2xl bottom-20 hover:text-red-700' disabled>
             <FontAwesomeIcon icon={faRegularHeart} />
-          </div>
+          </button>
         </div>
         <p className='font-bold text-gray-500 text-sm'>
           {productData.packagingSize} · {productData.dosageForm}
@@ -157,25 +154,30 @@ function ProductTile({productData}: ProductProps) {
         <p className='font-bold text-gray-500 text-sm truncate'>
           {productData.supplier}
         </p>
-        <div className='text-yellow-400 lg:hidden'>
-          <FontAwesomeIcon icon={faStar} />
-          <FontAwesomeIcon icon={faStar} />
-          <FontAwesomeIcon icon={faStar} />
-          <FontAwesomeIcon icon={faStar} />
-          <FontAwesomeIcon icon={faStar} />
+        <div className='flex flex-row text-s'>
+          <div className='text-yellow-400 lg:hidden'>
+            <FontAwesomeIcon icon={faStar} />
+            <FontAwesomeIcon icon={faStar} />
+            <FontAwesomeIcon icon={faStar} />
+            <FontAwesomeIcon icon={faStar} />
+            <FontAwesomeIcon icon={faStar} />
+          </div>
+          <span className='text-gray-600 px-2 lg:hidden'>
+            ({productData.reviewCount})
+          </span>
         </div>
         <div className='flex'>
             <span className='font-bold'>
               {productData.prices.salesPrice.formattedValue}
             </span>
-            <span className='line-through text-gray-500'>
+            <span className='line-through text-xs text-gray-500'>
               {productData.prices.recommendedRetailPrice.formattedValue}
             </span>
         </div>
-        <p className='font-bold text-gray-500'>
+        <p className='font-bold text-xs text-gray-500'>
           {productData.baseprice}
         </p>
-        <p className='text-xs text-gray-500 lg:hidden'>
+        <p className='text-xs text-gray-500 text-right bottom-20 lg:hidden'>
           Gesponsert
         </p>
       </div>
