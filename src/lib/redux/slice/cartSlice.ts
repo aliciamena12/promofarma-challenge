@@ -1,57 +1,58 @@
 import { Product } from '@/components/product-list/product-tile/product-tile.component';
-import { setCartStorage } from './../../utils/localStorage';
+import { setCartStorage } from '../../utils/localStorage';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
 export interface StateCart {
-    id: number;
-    cartItems:  CartProduct[];
-    totalPrice: number;
-    totalQuantityCount: number;
+  id: number;
+  cartItems:  CartProduct[];
+  totalPrice: number;
+  totalQuantityCount: number;
 }
 
 export interface CartState {
   cart: StateCart;
 }
 
-  export interface CartProduct {
-    id: string;
-    name: string;
-    image: string;
-    packagingSize: string;
-    dosageForm: string;
-    code: string;
-    price: number;
-    quantity:number;
-  }
+export interface CartProduct {
+  id: string;
+  name: string;
+  image: string;
+  packagingSize: string;
+  dosageForm: string;
+  code: string;
+  supplier: string;
+  price: number;
+  quantity:number;
+  stockLevel: number
+}
 
-
-  const initialState: CartState = {
-    cart: {
-      id:0,
-      cartItems: [],
-      totalQuantityCount: 0,
-      totalPrice: 0
-    },
-  };
+const initialState: CartState = {
+  cart: {
+    id:0,
+    cartItems: [],
+    totalQuantityCount: 0,
+    totalPrice: 0
+  },
+};
   
 
-  export const getCart = (state: CartState): StateCart => {
-    return state.cart;
-  };
+export const getCart = (state: CartState): StateCart => {
+  return state.cart;
+};
 
-  export const updateCart = (cart: StateCart): void => {
-    let totalQuantity = 0;
-    let totalPrice = 0;
-    cart.cartItems.forEach((element) => {
-      totalQuantity = totalQuantity + element.quantity;
-      totalPrice = totalPrice + (element.price * element.quantity);
-    })
-    cart.totalQuantityCount = totalQuantity;
-    cart.totalPrice = totalPrice;
-    setCartStorage(cart);
-  };
-  
+export const updateCart = (cart: StateCart): void => {
+  let totalQuantity = 0;
+  let totalPrice = 0;
+  cart.cartItems.forEach((element) => {
+    totalQuantity = totalQuantity + element.quantity;
+    totalPrice = totalPrice + (element.price * element.quantity);
+  })
+  cart.totalQuantityCount = totalQuantity;
+  cart.totalPrice = totalPrice;
+  setCartStorage(cart);
+};
+
 export const cartSlice = createSlice({
   name: 'cart',
   initialState,
@@ -70,8 +71,10 @@ export const cartSlice = createSlice({
         packagingSize: productData.packagingSize,
         dosageForm: productData.dosageForm,
         code: productData.saleConditions.OR[0].code,
+        supplier: productData.supplier,
         price: productData.prices.salesPrice.value,
         quantity: currentItemQuantity + 1,
+        stockLevel: productData.stock || 0
       }
      
       let currentCartList: Array<CartProduct> = state.cart.cartItems;
@@ -88,13 +91,11 @@ export const cartSlice = createSlice({
           }
         })
         updatedCartList = currentCartList;
-        console.log(" update "+JSON.stringify(updatedCartList))
       }
       const newState: StateCart = {...state.cart, cartItems: updatedCartList};
       state.cart = newState;
       updateCart(newState);
     },
-
     incrementQuantity: (state, action: PayloadAction<string>) => {
       state.cart.cartItems.find((item: CartProduct) => {
         if(item.id === action.payload) {
@@ -103,21 +104,30 @@ export const cartSlice = createSlice({
         }}
       )
       state.cart.totalQuantityCount++;
+      updateCart(state.cart);
     },
     decrementQuantity: (state, action: PayloadAction<string>) => {
       state.cart.cartItems.find((item: CartProduct) => {
         if(item.id === action.payload) {
           if(item.quantity > 0) {
             item.quantity--;
-            state.cart.totalQuantityCount--;
           } else {
-            state.cart.cartItems.filter((item)=> item.id !== item.id);
+            state.cart.cartItems.filter((item)=> item.id !== action.payload);
           }
         }}
       )
       state.cart.totalQuantityCount--;
+      updateCart(state.cart);
+
+    },
+    removeItemFromCart: (state, action: PayloadAction<CartProduct>) => {
+      const newCartItems = state.cart.cartItems.filter((item)=> item.id !== action.payload.id);
+      state.cart = {...state.cart, cartItems: newCartItems}
+      updateCart(state.cart);
     }
   },
 });
 
-export const { addToCart, incrementQuantity, decrementQuantity  } = cartSlice.actions;
+export const { addToCart, incrementQuantity, decrementQuantity, removeItemFromCart  } = cartSlice.actions;
+
+export default cartSlice.reducer;

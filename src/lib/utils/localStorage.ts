@@ -1,4 +1,4 @@
-import { StateCart } from "../redux/slice/cart.slice";
+import { StateCart } from "../redux/slice/cartSlice";
 
 export const getCartStorage = (): any => {
   return JSON.parse(window.localStorage.getItem("cart")!)   
